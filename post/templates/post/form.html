@@ -1,0 +1,9 @@
+<h2>게시글 작성</h2>
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ post_form.as_p }}
+    <label>이미지 업로드</label>
+    <input type="file" name="images" multiple>
+    <button type="submit">작성</button>
+</form>
+

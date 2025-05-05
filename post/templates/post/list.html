@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>글 목록</title>
+</head>
+<body>
+    <h1>글 목록</h1>
+
+    <ul>
+        {% for post in posts %}
+            <li>
+                <strong>{{ post.title }}</strong>
+                <br>작성자: {{ post.author.username }}
+
+                {% for image in post.images.all %}
+                    <br><img src="{{ image.image.url }}" width="100">
+                {% endfor %}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'post_create' %}">➕ 글쓰기</a>
+</body>
+</html>
