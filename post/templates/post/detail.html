@@ -10,15 +10,45 @@
     <h3>첨부 이미지</h3>
     {% for image in images %}
         <img src="{{ image.image.url }}" width="300" style="margin-bottom: 10px;"><br>
-    {% empty %}
-        <p>등록된 이미지가 없습니다.</p>
     {% endfor %}
 
     <br>
     <a href="{% url 'post_list' %}">목록으로</a>
 
     {% if request.user == post.author %}
-        <a href="{% url 'update_post' post.pk %}">[게시글 수정]</a>
+        <a href="{% url 'edit_post' post.pk %}">[게시글 수정]</a>
+    {% endif %}
+
+    <form method="post" action="{% url 'toggle_like' post.pk %}">
+        {% csrf_token %}
+        <button type="submit">
+            {% if user in post.liked_users.all %}
+                좋아요 취소
+            {% else %}
+                좋아요
+            {% endif %}
+        </button>
+        <span>총 좋아요 수: {{ post.total_likes }}</span>
+    </form>    
+
+    <hr>
+
+    <h3>댓글</h3>
+
+    {% if post.comments.all %}
+        {% for comment in post.comments.all %}
+            <p><strong>{{ comment.author }}</strong>: {{ comment.content }} ({{ comment.created_at }})</p>
+        {% endfor %}
+    {% endif %}
+
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'add_comment' post.pk %}">
+        {% csrf_token %}
+        {{ comment_form.as_p }}
+        <button type="submit">댓글 작성</button>
+    </form>
+    {% else %}
+        <p><a href="{% url 'login' %}">로그인</a> 후 댓글을 작성할 수 있습니다.</p>
     {% endif %}
 </body>
 </html>

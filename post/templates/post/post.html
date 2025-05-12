@@ -1,0 +1,20 @@
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+  
+    <input type="text" name="title" value="{{ post.title }}"><br>
+    <textarea name="content">{{ post.content }}</textarea><br>
+  
+    <h4>기존 이미지</h4>
+    {% for img in post.images.all %}
+      <label>
+        <input type="checkbox" name="delete_images" value="{{ img.id }}">
+        <img src="{{ img.image.url }}" width="150px">
+      </label>
+    {% endfor %}
+  
+    <h4>새 이미지 추가</h4>
+    <input type="file" name="new_images" multiple><br>
+  
+    <button type="submit">수정 완료</button>
+  </form>
+  
