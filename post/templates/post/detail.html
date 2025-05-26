@@ -13,13 +13,13 @@
     {% endfor %}
 
     <br>
-    <a href="{% url 'post_list' %}">목록으로</a>
+    <a href="{% url 'post:post_list' %}">목록으로</a><br>
 
     {% if request.user == post.author %}
-        <a href="{% url 'edit_post' post.pk %}">[게시글 수정]</a>
+        <a href="{% url 'post:edit_post' post.pk %}">[게시글 수정]</a>
     {% endif %}
 
-    <form method="post" action="{% url 'toggle_like' post.pk %}">
+    <form method="post" action="{% url 'post:toggle_like' post.pk %}">
         {% csrf_token %}
         <button type="submit">
             {% if user in post.liked_users.all %}
@@ -42,7 +42,7 @@
     {% endif %}
 
     {% if user.is_authenticated %}
-    <form method="post" action="{% url 'add_comment' post.pk %}">
+    <form method="post" action="{% url 'post:add_comment' post.pk %}">
         {% csrf_token %}
         {{ comment_form.as_p }}
         <button type="submit">댓글 작성</button>

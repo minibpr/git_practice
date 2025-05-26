@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Post, Image
-from .forms import PostForm
-
+from .forms import PostForm, CommentForm
+from django.db.models import Q
 
 @login_required
 def post_create(request):
@@ -14,7 +14,7 @@ def post_create(request):
             post.save()
             for img in request.FILES.getlist('images'):
                 Image.objects.create(post=post, image=img)
-            return redirect('post_detail', pk=post.pk)
+            return redirect('post:post_detail', pk=post.pk)
     else:
         post_form = PostForm()
     return render(request, 'post/form.html', {'post_form': post_form})
@@ -23,13 +23,13 @@ def post_create(request):
 def post_update(request, pk):
     post = get_object_or_404(Post, pk=pk)
     if request.user != post.author:
-        return redirect('post_detail', pk=pk)
+        return redirect('post:post_detail', pk=pk)
 
     if request.method == 'POST':
         post_form = PostForm(request.POST, instance=post)
         if post_form.is_valid():
             post_form.save()
-            return redirect('post_detail', pk=pk)
+            return redirect('post:post_detail', pk=pk)
     else:
         post_form = PostForm(instance=post)
 
@@ -37,7 +37,25 @@ def post_update(request, pk):
 
 @login_required
 def post_list(request):
-    posts = Post.objects.all().order_by('-id')
+    query = request.GET.get('q', '')
+    field = request.GET.get('field', 'all')
+    posts = Post.objects.all()
+
+    if query:
+        keywords = [kw for kw in query.replace(',', ' ').split() if kw]
+
+        q_obj = Q()
+        for kw in keywords:
+            if field == 'title':
+                q_obj |= Q(title__icontains=kw)
+            elif field == 'content':
+                q_obj |= Q(content__icontains=kw)
+            else:  # 'all'
+                q_obj |= Q(title__icontains=kw) | Q(content__icontains=kw)
+
+        posts = posts.filter(q_obj).distinct()
+
+    posts = posts.order_by('-id')
     return render(request, 'post/list.html', {'posts': posts})
 
 @login_required
@@ -50,12 +68,12 @@ def add_comment(request, post_id):
             comment.post = post
             comment.author = request.user
             comment.save()
-    return redirect('post_detail', post_id=post.id)
+    return redirect('post:post_detail', pk=post.id)
 
 @login_required
 def post_detail(request, pk):
     post = get_object_or_404(Post, pk=pk)
-    images = post.image_set.all()
+    images = post.images.all()
     comment_form = CommentForm()
     return render(request, 'post/detail.html', {
         'post': post,
@@ -72,7 +90,7 @@ def toggle_like(request, post_id):
     else:
         post.liked_users.add(request.user)
 
-    return redirect('post_detail', post_id=post.id)
+    return redirect('post:post_detail', pk=post.id)
 
 @login_required
 def edit_post(request, post_id):
@@ -92,6 +110,9 @@ def edit_post(request, post_id):
         for file in request.FILES.getlist('new_images'):
             Image.objects.create(post=post, image=file)
 
-        return redirect('post_detail', post_id=post.id)
+        return redirect('post:post_detail', pk=post.id)
 
-    return render(request, 'edit_post.html', {'post': post})
+    return render(request, 'post/edit_post.html', {
+        'post': post,
+        'images': post.images.all(),  # ✅ 이미지 직접 전달
+})
